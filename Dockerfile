@@ -1,14 +1,26 @@
-FROM alpine:latest
+FROM node:18-bullseye
+
+RUN apt-get update && apt-get install -y curl unzip iproute2 && rm -rf /var/lib/apt/lists/*
+
+RUN curl -L https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-64.zip -o xray.zip \
+    && unzip xray.zip \
+    && mv xray /usr/local/bin/xray \
+    && chmod +x /usr/local/bin/xray \
+    && rm -rf xray.zip *.dat
 
 WORKDIR /app
 
-RUN apk add --no-cache wget unzip ca-certificates \
- && wget https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-64.zip \
- && unzip Xray-linux-64.zip \
- && rm Xray-linux-64.zip
+COPY package.json .
+RUN npm install
 
-COPY config.json /app
+COPY server.js .
+COPY xray.json .
+COPY start.sh .
+
+RUN chmod +x start.sh
+
+ENV PORT=8080
 
 EXPOSE 8080
 
-CMD ["./xray", "run", "-c", "config.json"]
+CMD ["./start.sh"]
