@@ -8,20 +8,24 @@ const XRAY_PORT = 8001;
 let activeConnections = 0;
 let maxConnections = 0;
 
-function getConnections(cb) {
-  const cmd = `ss -tn state established '( sport = :${XRAY_PORT} )' | awk '{print $5}' | cut -d: -f1 | sort | uniq | wc -l`;
+const activeIPs = new Map();
+const TIMEOUT = 5000; // 30s
 
-  exec(cmd, (err, stdout) => {
-    if (err) return cb(0);
+function getClientIP(req) {
+  const xff = req.headers["x-forwarded-for"];
+  if (xff) {
+    return xff.split(",")[0].trim();
+  }
+  return req.socket.remoteAddress;
+}
 
-    let count = parseInt(stdout.trim()) || 0;
-    count = Math.max(0, count - 1);
-    if (count > maxConnections) {
-      maxConnections = count;
+function cleanup() {
+  const now = Date.now();
+  for (const [ip, ts] of activeIPs.entries()) {
+    if (now - ts > TIMEOUT) {
+      activeIPs.delete(ip);
     }
-
-    cb(count);
-  });
+  }
 }
 
 const server = http.createServer((req, res) => {
@@ -73,29 +77,21 @@ const server = http.createServer((req, res) => {
 
   if (req.url === "/stats") {
     res.end(JSON.stringify({
-      connections: Math.max(0, activeConnections),
-      max: maxConnections
+      connections: activeIPs.size
     }));
     return;
   }
 
   if (req.url.startsWith("/v1/projects/update")) {
-    activeConnections++;
-
-    if (activeConnections > maxConnections) {
-      maxConnections = activeConnections;
-    }
-
+    const ip = getClientIP(req);
+    activeIPs.set(ip, Date.now());
+    cleanup();
     proxy.web(req, res, {
       target: "http://127.0.0.1:8001",
       changeOrigin: true,
       xfwd: true
     });
-
-    res.on("finish", () => {
-      activeConnections = Math.max(0, activeConnections - 1);
-    });
-
+    
     return;
   }
 
