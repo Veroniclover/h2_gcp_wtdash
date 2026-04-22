@@ -76,16 +76,23 @@ const server = http.createServer((req, res) => {
   }
 
   if (req.url === "/stats") {
+    cleanup();
     res.end(JSON.stringify({
-      connections: activeIPs.size
+      connections: activeIPs.size,
+      max: maxConnections
     }));
     return;
   }
 
   if (req.url.startsWith("/v1/projects/update")) {
-    const ip = getClientIP(req);
-    activeIPs.set(ip, Date.now());
+    //const ip = getClientIP(req);
+    //activeIPs.set(ip, Date.now());
+    const key = getClientIP(req) + "|" + req.headers["user-agent"];
+    activeIPs.set(key, Date.now());
     cleanup();
+    if (activeIPs.size > maxConnections) {
+      maxConnections = activeIPs.size;
+    }
     proxy.web(req, res, {
       target: "http://127.0.0.1:8001",
       changeOrigin: true,
