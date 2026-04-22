@@ -3,13 +3,23 @@ const { exec } = require("child_process");
 const httpProxy = require("http-proxy");
 
 const proxy = httpProxy.createProxyServer({});
-
 const XRAY_PORT = 8001;
 
+let maxConnections = 0;
+
 function getConnections(cb) {
-  exec(`ss -tn state established '( sport = :${XRAY_PORT} )' | awk '{print $5}' | cut -d: -f1 | sort | uniq | wc -l`, (err, stdout) => {
+  const cmd = `ss -tn state established '( sport = :${XRAY_PORT} )' | awk '{print $5}' | cut -d: -f1 | sort | uniq | wc -l`;
+
+  exec(cmd, (err, stdout) => {
     if (err) return cb(0);
-    cb(parseInt(stdout.trim()) || 0);
+
+    let count = parseInt(stdout.trim()) || 0;
+    count = Math.max(0, count - 1);
+    if (count > maxConnections) {
+      maxConnections = count;
+    }
+
+    cb(count);
   });
 }
 
@@ -29,21 +39,29 @@ const server = http.createServer((req, res) => {
       color: white;
     }
     .box {
-      margin-top: 100px;
+      margin-top: 80px;
       font-size: 48px;
+    }
+    .small {
+      font-size: 20px;
+      opacity: 0.7;
     }
   </style>
 </head>
 <body>
-  <h1>Xray Active Connections</h1>
+  <h1>Xray Connections</h1>
   <div class="box" id="count">Loading...</div>
+  <div class="small">Max: <span id="max">0</span></div>
 
   <script>
     async function load() {
       const res = await fetch('/stats');
       const data = await res.json();
+
       document.getElementById('count').innerText = data.connections;
+      document.getElementById('max').innerText = data.max;
     }
+
     load();
   </script>
 </body>
@@ -52,15 +70,17 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  
   if (req.url === "/stats") {
     getConnections((count) => {
       res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ connections: count }));
+      res.end(JSON.stringify({
+        connections: count,
+        max: maxConnections
+      }));
     });
     return;
   }
-  
+
   if (req.url.startsWith("/v1/projects/update")) {
     proxy.web(req, res, {
       target: "http://127.0.0.1:8001",
@@ -74,6 +94,4 @@ const server = http.createServer((req, res) => {
   res.end("Not found");
 });
 
-server.listen(8080, () => {
-  console.log("Server running on 8080");
-});
+server.listen(8080);
