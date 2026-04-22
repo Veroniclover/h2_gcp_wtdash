@@ -4,7 +4,7 @@
   },
   "inbounds": [
     {
-      "port": 8080,
+      "port": 8001,
       "listen": "0.0.0.0",
       "protocol": "vless",
       "settings": {
@@ -19,7 +19,6 @@
         "network": "xhttp",
         "security": "none",
         "xhttpSettings": {
-          "path": "/v1/projects/update",
           "mode": "auto"
         }
       }
