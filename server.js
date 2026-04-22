@@ -9,7 +9,7 @@ let activeConnections = 0;
 let maxConnections = 0;
 
 const activeIPs = new Map();
-const TIMEOUT = 5000; // 30s
+const TIMEOUT = 30000; // 30s
 
 function getClientIP(req) {
   const xff = req.headers["x-forwarded-for"];
