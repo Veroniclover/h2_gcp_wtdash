@@ -63,7 +63,7 @@ const server = http.createServer((req, res) => {
   
   if (req.url.startsWith("/v1/projects/update")) {
     proxy.web(req, res, {
-      target: `http://127.0.0.1:${XRAY_PORT}`
+      target: `http://127.0.0.1:${XRAY_PORT}/v1/projects/update`
     });
     return;
   }
