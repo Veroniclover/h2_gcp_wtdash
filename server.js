@@ -82,6 +82,25 @@ const server = http.createServer((req, res) => {
   }
 
   if (req.url.startsWith("/v1/projects/update")) {
+    activeConnections++;
+
+    if (activeConnections > maxConnections) {
+      maxConnections = activeConnections;
+    }
+
+    proxy.web(req, res, {
+      target: "http://127.0.0.1:8001",
+      changeOrigin: true,
+      xfwd: true
+    });
+
+    res.on("finish", () => {
+      activeConnections = Math.max(0, activeConnections - 1);
+    });
+
+    return;
+  }
+  if (req.url.startsWith("/v1/projects/update")) {
     proxy.web(req, res, {
       target: "http://127.0.0.1:8001",
       changeOrigin: true,
