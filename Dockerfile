@@ -14,7 +14,7 @@ COPY package.json /app
 RUN npm install
 
 COPY server.js /app
-COPY xray.json /app
+COPY config.json /app
 COPY start.sh /app
 
 RUN chmod +x start.sh
