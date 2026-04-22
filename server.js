@@ -72,13 +72,10 @@ const server = http.createServer((req, res) => {
   }
 
   if (req.url === "/stats") {
-    getConnections((count) => {
-      res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({
-        connections: count,
-        max: maxConnections
-      }));
-    });
+    res.end(JSON.stringify({
+      connections: Math.max(0, activeConnections),
+      max: maxConnections
+    }));
     return;
   }
 
