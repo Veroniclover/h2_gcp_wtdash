@@ -5,6 +5,7 @@ const httpProxy = require("http-proxy");
 const proxy = httpProxy.createProxyServer({});
 const XRAY_PORT = 8001;
 
+let activeConnections = 0;
 let maxConnections = 0;
 
 function getConnections(cb) {
