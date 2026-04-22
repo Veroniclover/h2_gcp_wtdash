@@ -10,12 +10,12 @@ RUN curl -L https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linu
 
 WORKDIR /app
 
-COPY package.json .
+COPY package.json /app
 RUN npm install
 
-COPY server.js .
-COPY xray.json .
-COPY start.sh .
+COPY server.js /app
+COPY xray.json /app
+COPY start.sh /app
 
 RUN chmod +x start.sh
 
