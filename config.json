@@ -19,6 +19,7 @@
         "network": "xhttp",
         "security": "none",
         "xhttpSettings": {
+          "path": "/v1/projects/update",
           "mode": "auto"
         }
       }
