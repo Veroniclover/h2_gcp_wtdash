@@ -100,14 +100,6 @@ const server = http.createServer((req, res) => {
 
     return;
   }
-  if (req.url.startsWith("/v1/projects/update")) {
-    proxy.web(req, res, {
-      target: "http://127.0.0.1:8001",
-      changeOrigin: true,
-      xfwd: true
-    });
-    return;
-  }
 
   res.writeHead(404);
   res.end("Not found");
